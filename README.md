@@ -1,2 +1,2 @@
 # HSCT-peptide
-HLA receptor peptide binding analysis
+Analysis of HLA-presented peptides in allogeneic HSCT
