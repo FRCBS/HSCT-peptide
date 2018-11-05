@@ -1,2 +1,8 @@
 # HSCT-peptide
-Analysis of HLA-presented peptides in allogeneic HSCT
+
+This repository contains the scripts for the analysis of HLA-presented peptides in allogeneic HSCT.
+
+Submitten manuscript:
+
+Ritari J, Hyvärinen K, Koskela  S, Niittyvuopio R, Nihtinen A, Salmenniemi U, Putkonen M, Volin L, Kwan T, Pastinen T, Itälä-
+Remes M, Partanen J. Genome-wide analysis of non-synonymous mismatches in complications of allogeneic hematopoietic stem cell transplantation. 11-2018.
