@@ -134,42 +134,45 @@ tmp <- full_join(iedb.matches.allpep, clin)[, c('ID', 'Matches', 'aGvHD', 'cGvHD
 
 tmp <- gather(tmp, Ligand, Count, c(1, 5:7))
 
-facet.labs <- c(`All_ligands`="All HLA ligands",
-                `Immunogenic_ligands`="Immunogenic HLA ligands",
-                `mHAs`="minor H antigens",
-                `Rank`="Predicted affinity rank < 4")
+facet.labs <- c(`All_ligands`="M1", # All HLA ligands
+                `Immunogenic_ligands`="M2", # Immunogenic HLA ligands
+                `mHAs`="M3", # minor H antigens
+                `Rank`="M4") # Predicted affinity rank < 4
 
 # aGvHD
 p1 <- ggplot(tmp %>% na.omit, aes(x=aGvHD %>% factor, y=Count)) +
-  geom_boxplot(outlier.shape=19, outlier.alpha=0.5) +
+  geom_boxplot(outlier.shape=NA) + 
+  geom_point(size=0.8, shape=21, color='grey25', alpha=0.5,  position=position_jitter(0.15)) +
   facet_wrap(~Ligand, scales='free', labeller=as_labeller(facet.labs)) +
   theme_light() +
   xlab('aGvHD gradus') +
   ylab('Ligand count') +
-  ggtitle('Ligand numbers in acute GvHD') +
+  ggtitle('Acute GvHD') +
   theme(strip.background=element_rect(colour="grey70"), plot.title=element_text(size=12))
 # cGvHD
 p2 <- ggplot(tmp %>% na.omit, aes(x=cGvHD %>% factor(levels=c('No','Limited', 'Extensive'), ordered=T), y=Count)) +
-  geom_boxplot(outlier.shape=19, outlier.alpha=0.5) +
+  geom_boxplot(outlier.shape=NA) + 
+  geom_point(size=0.8, shape=21, color='grey25', alpha=0.5,  position=position_jitter(0.15)) +
   facet_wrap(~Ligand, scales='free', labeller=as_labeller(facet.labs)) +
   theme_light() +
   xlab('cGvHD gradus') +
   ylab('Ligand count') +
-  ggtitle('Ligand numbers in chronic GvHD') +
+  ggtitle('Chronic GvHD') +
   theme(strip.background=element_rect(colour="grey70"), plot.title=element_text(size=12))
 # Relapse
 p3 <- ggplot(tmp %>% na.omit, aes(x=relapse %>% factor, y=Count)) +
-  geom_boxplot(outlier.shape=19, outlier.alpha=0.5) +
+  geom_boxplot(outlier.shape=NA) + 
+  geom_point(size=0.8, shape=21, color='grey25', alpha=0.5,  position=position_jitter(0.15)) +
   facet_wrap(~Ligand, scales='free', labeller=as_labeller(facet.labs)) +
   theme_light() +
   xlab('Relapse occurrence') +
   ylab('Ligand count') +
-  ggtitle('Ligand numbers in relapse') +
+  ggtitle('Relapse') +
   theme(strip.background=element_rect(colour="grey70"), plot.title=element_text(size=12))
 
 # plot
-pdf(height=5, width=9.5, './results/Figure2_Ligand_counts_by_outcome.pdf')
-ggarrange(p1, p3, align='v', nrow=1, ncol=2, labels=c('a', 'b'))
+pdf(height=5, width=10, './results/Figure2_Ligand_counts_by_outcome.pdf')
+ggarrange(p1, p3, align='v', nrow=1, ncol=2, labels=c('a', 'b'), font.label=list(size=16))
 dev.off()
 
 
@@ -279,49 +282,65 @@ aff.relapse.glm <- glm(Relapse ~ RANK+PepNum+HLAfreqsum+Dir+Age+HLAs, data=data.
                                                                                   Age=clin$dage[aff.ranks.immpep.ind] %>% scale, 
                                                                                   Dir=tr.dir[aff.ranks.immpep.ind]), family=binomial) %>% summary
 
+# test transplantation date, cGvHD
+glm(cGvHD~Year+Dir, data=data.frame(Year=str_split_fixed(clin$Txdate, '\\.', 3)[, 3] %>% 
+                                  str_split_fixed(., '\\(', 2) %>% .[, 1] %>% 
+                                  str_split_fixed(., '\\.', 5) %>% .[, 1] %>% as.numeric,
+                                cGvHD=chronic.bi03, Dir=tr.dir),
+    family='binomial') %>% summary
 
-## Collect regression results
 
-all.cGvHD.glm$coefficients %>% round(., 3)
-imm.cGvHD.glm$coefficients %>% round(., 3)
-mha.cGvHD.glm$coefficients %>% round(., 3)
-aff.cGvHD.glm$coefficients %>% round(., 3)
-
-all.aGvHD.polr %>% round(., 3)
-imm.aGvHD.polr %>% round(., 3)
-mha.aGvHD.polr %>% round(., 3)
-aff.aGvHD.polr %>% round(., 3)
-
-all.relapse.glm$coefficients %>% round(., 3)
-imm.relapse.glm$coefficients %>% round(., 3)
-mha.relapse.glm$coefficients %>% round(., 3)
-aff.relapse.glm$coefficients %>% round(., 3)
 
 
 ## Collect cGvHD glm results
 
-tmp4 <- data.frame(Ligand=c('All', 'Imm', 'mHA'),
-                   rbind(all.cGvHD.glm$coef[2, c(1, 2, 2, 4)],
-                         imm.cGvHD.glm$coef[2, c(1, 2, 2, 4)],
-                         mha.cGvHD.glm$coef[2, c(1, 2, 2, 4)]))
+tmp4 <- data.frame(Ligand=c('M1', 'M2', 'M3'),
+                   rbind(all.cGvHD.glm$coef[2, c(1, 2, 2, 4)] %>% exp,
+                         imm.cGvHD.glm$coef[2, c(1, 2, 2, 4)] %>% exp,
+                         mha.cGvHD.glm$coef[2, c(1, 2, 2, 4)] %>% exp))
 tmp4[, 4] <- tmp4[, 4]*-1 # error bar down
 colnames(tmp4)[2:5] <- c('Coefficient', 'Errp', 'Errm', 'Pvalue')
+tmp4$Pvalue <- c(all.cGvHD.glm$coef[2, 4], imm.cGvHD.glm$coef[2, 4], mha.cGvHD.glm$coef[2, 4])
 
 # plot of reg. coefficients
 p6 <- ggplot(tmp4, aes(x=Ligand, y=Coefficient)) +
   geom_point(shape=17, size=4, color='red', alpha=0.7) +
-  ylim(0.15, 0.9) +
   geom_errorbar(aes(ymin=Errm+Coefficient, ymax=Errp+Coefficient), width=0.1, alpha=0.6) +
-  annotate('text', x=tmp4$Ligand, y=0.18, label=paste('p =', round(tmp4$Pvalue, 3)), size=3) +
-  ggtitle('Regression coefficients for chronic GvHD') +
+  ylim(0.15, 3.3) + #ylim(0.15, 0.9) +
+  annotate('text', x=tmp4$Ligand, y=0.2, label=paste('p =', round(tmp4$Pvalue, 3)), size=3) +
+  ggtitle('cGvHD logistic regression - No vs. Extensive') +
+  xlab('Method') +
+  ylab('Odds ratio') +
   theme_light() +
   theme(plot.title=element_text(size=12))
 
 # plot cGvHD ligand counts and reg coeffs
 pdf(height=4.5, width=10, './results/Figure3_reg_cGvHD.pdf')
-ggarrange(p2, p6, align='h', labels=c('a', 'b'))
+ggarrange(p2, p6, align='h', labels=c('a', 'b'), font.label=list(size=16))
 dev.off()
 
 
+                       
+## Analysis of HLA type representation
+                       
+rec.types <- read.delim('./data/2abc.recipient.types', stringsAsFactors=F)
+rec.types <- rec.types[match(gsub('DT', 'T', clin$ID), row.names(rec.types)), ]
+rec.types <- cbind(separate(rec.types, HLA.A, c('A_1', 'A_2'), ','), 
+                   separate(rec.types, HLA.B, c('B_1', 'B_2'), ','), 
+                   separate(rec.types, HLA.C, c('C_1', 'C_2'), ',') )[, c(1,2,9,10,17,18)]
+rec.types <- apply(rec.types, 2, function(x) gsub('HLA-', '', x, fixed=T)) %>% data.frame(stringsAsFactors=F)
+rec.types <- apply(rec.types, 2, function(x) gsub(' ', '', x, fixed=T)) %>% data.frame(stringsAsFactors=F)
+
+iedb.hla <- fread('./data/IEDB_ligand.txt', data.table=F, header=F)
+iedb.hla <- iedb.hla[nchar(iedb.hla$V1)>6, ]
+griffioen.hla <- fread('./data/Griffioen_9mers.tsv', data.table=F)
+griffioen.hla <- griffioen.hla[nchar(griffioen.hla$HLA)>6, ]
+  
+sum(c(rec.types$A_1, rec.types$A_2) %in% iedb.hla$V1)       / 314
+sum(c(rec.types$A_1, rec.types$A_2) %in% griffioen.hla$HLA) / 314
+sum(c(rec.types$B_1, rec.types$B_2) %in% iedb.hla$V1)       / 314
+sum(c(rec.types$B_1, rec.types$B_2) %in% griffioen.hla$HLA) / 314
+sum(c(rec.types$C_1, rec.types$C_2) %in% iedb.hla$V1)       / 314
+sum(c(rec.types$C_1, rec.types$C_2) %in% griffioen.hla$HLA) / 314
 
 
