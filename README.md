@@ -9,6 +9,6 @@
 Submitted manuscript:
 
 Ritari J, Hyvärinen K, Koskela  S, Niittyvuopio R, Nihtinen A, Salmenniemi U, Putkonen M, Volin L, Kwan T, Pastinen T, Itälä-
-Remes M, Partanen J. _Genome-wide analysis of non-synonymous mismatches in chronic graft-versus-host disease after allogeneic hematopoietic stem cell transplantation._ 2019-03. 
+Remes M, Partanen J. _Computational analysis of HLA-presentation of non-synonymous recipient mismatches indicates effect on the risk of chronic graft-versus-host disease after allogeneic HSCT._ 2019-03. 
 
 
